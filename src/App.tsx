@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { AssessmentsHub } from './features/assessments/AssessmentsHub';
@@ -13,13 +13,13 @@ import { ProgramsPage } from './features/programs/ProgramsPage';
 import { ResourcesPage } from './features/resources/ResourcesPage';
 import { DemoAssessmentPage } from './features/assessments/DemoAssessmentPage';
 import { SmartAlertsPage } from './features/alerts/SmartAlertsPage';
+import { LandingPage } from './features/landing/LandingPage';
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/" element={<AppLayout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        
         <Route path="dashboard" element={<DashboardPage />} />
         
         <Route path="assessments" element={<AssessmentsHub />} />
