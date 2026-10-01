@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { usePrototypeStore } from '../../store/usePrototypeStore';
 import type { WellbeingCheckIn } from '../../types';
 import { cn } from '../../lib/utils';
+import { getCurrentUser } from '../auth/auth';
 
 const moods = [
   { value: 'struggling' as const, label: 'Low Energy', icon: Battery, tone: 'bg-[#f0ebfb] text-[#7653ad]' },
@@ -34,7 +35,7 @@ export function DashboardPage() {
   const [selectedMood, setSelectedMood] = useState<WellbeingCheckIn['mood'] | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const chooseMood = (mood: WellbeingCheckIn['mood']) => { setSelectedMood(mood); setCurrentCheckIn({ id: 'dashboard-checkin', date: new Date().toISOString(), mood }); };
-  const firstName = profile.name.split(' ')[0];
+  const firstName = (getCurrentUser()?.fullName ?? profile.name).split(' ')[0];
 
   return <div className="seimei-dashboard-hero mx-auto max-w-6xl space-y-5 rounded-2xl p-1 pb-10 animate-in fade-in duration-500">
     <header className="flex items-start justify-between gap-4">

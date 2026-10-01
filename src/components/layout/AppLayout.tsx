@@ -1,6 +1,6 @@
 import logo from "../../assets/LOGO_img.jpeg";
 import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -12,9 +12,12 @@ import {
   Sparkles,
   Bell,
   Menu,
-  X
+  X,
+  ChevronUp,
+  LogOut
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { clearAuthentication, getAuthenticatedUser } from '../../features/auth/auth';
 
 const navGroups = [
   {
@@ -45,6 +48,14 @@ const navGroups = [
 
 export const AppLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const user = getAuthenticatedUser();
+
+  function handleSignOut() {
+    clearAuthentication();
+    navigate('/sign-in', { replace: true });
+  }
 
   return (
     <div className="flex h-screen bg-[var(--color-surface-primary)] overflow-hidden font-sans">
@@ -126,14 +137,21 @@ export const AppLayout = () => {
           <div className="rounded-xl bg-[var(--color-brand-50)] border border-[var(--color-brand-100)] p-3.5 mb-4">
             <p className="text-[11px] leading-relaxed text-[var(--color-brand-800)]">Small steps today.<br />Big changes tomorrow.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[var(--color-brand-100)] flex items-center justify-center text-[var(--color-accent)] text-xs font-semibold border border-[var(--color-accent)]/10">
-              JS
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[var(--color-text-primary)]">Alex Mercer</p>
-              <p className="text-[10px] text-[var(--color-text-secondary)]">Product Manager</p>
-            </div>
+          <div className="relative">
+            <button type="button" aria-expanded={profileMenuOpen} onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex w-full items-center gap-3 rounded-lg p-1 text-left hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-accent)]/10 bg-[var(--color-brand-100)] text-xs font-semibold text-[var(--color-accent)]">{user?.fullName.split(' ').map((part) => part[0]).join('') ?? 'JS'}</div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-[var(--color-text-primary)]">{user?.fullName ?? 'Sarah Johnson'}</p>
+                <p className="truncate text-[10px] text-[var(--color-text-secondary)]">{user?.role ?? 'Employee account'}</p>
+              </div>
+              <ChevronUp size={15} className={cn('text-[var(--color-text-secondary)] transition-transform', profileMenuOpen && 'rotate-180')} />
+            </button>
+            {profileMenuOpen && <div className="absolute bottom-full left-0 z-20 mb-2 w-full rounded-lg border border-[var(--color-border)] bg-white p-2 shadow-[0_8px_24px_rgba(34,54,37,0.12)]">
+              <p className="truncate px-2 py-1.5 text-[10px] text-[var(--color-text-secondary)]">{user?.email}</p>
+              <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-brand-50)]">
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>}
           </div>
         </div>
       </div>

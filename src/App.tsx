@@ -14,12 +14,18 @@ import { ResourcesPage } from './features/resources/ResourcesPage';
 import { DemoAssessmentPage } from './features/assessments/DemoAssessmentPage';
 import { SmartAlertsPage } from './features/alerts/SmartAlertsPage';
 import { LandingPage } from './features/landing/LandingPage';
+import { LoginPage } from './features/auth/LoginPage';
+import { ProtectedRoute } from './features/auth/ProtectedRoute';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/" element={<AppLayout />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/sign-in" element={<LoginPage />} />
+      <Route path="/create-account" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<AppLayout />}>
         <Route path="dashboard" element={<DashboardPage />} />
         
         <Route path="assessments" element={<AssessmentsHub />} />
@@ -49,6 +55,7 @@ export default function App() {
             <p className="text-[var(--color-text-secondary)]">The requested page could not be found.</p>
           </div>
         } />
+        </Route>
       </Route>
     </Routes>
   );
