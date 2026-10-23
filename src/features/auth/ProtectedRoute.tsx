@@ -1,6 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { getAuthenticatedUser } from './auth';
+import { getAuthenticatedUser, isAdminUser } from './auth';
 
 export function ProtectedRoute() {
-  return getAuthenticatedUser() ? <Outlet /> : <Navigate to="/sign-in" replace />;
+  const user = getAuthenticatedUser();
+  if (!user) return <Navigate to="/sign-in" replace />;
+  return isAdminUser(user) ? <Navigate to="/admin" replace /> : <Outlet />;
 }

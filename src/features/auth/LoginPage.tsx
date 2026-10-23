@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { authenticate, getAuthenticatedUser, initializeAuth } from './auth';
+import { ADMIN_DEMO_CREDENTIALS, authenticate, getAuthenticatedUser, initializeAuth, signInAdmin } from './auth';
 import { RegistrationForm } from './RegistrationForm';
 
 export function LoginPage() {
@@ -17,6 +17,7 @@ export function LoginPage() {
   const [passwordError, setPasswordError] = useState('');
   const [loginError, setLoginError] = useState('');
   const [authReady, setAuthReady] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,7 +32,9 @@ export function LoginPage() {
     return () => { isMounted = false; };
   }, []);
 
-  if (getAuthenticatedUser()) return <Navigate to="/dashboard" replace />;
+  const currentUser = getAuthenticatedUser();
+  if (currentUser?.accountType === 'admin') return <Navigate to="/admin" replace />;
+  if (currentUser?.accountType === 'employee' && mode === 'register') return <Navigate to="/dashboard" replace />;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,13 +66,42 @@ export function LoginPage() {
     }
   }
 
+  async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const normalizedEmail = email.trim();
+    const nextEmailError = !normalizedEmail
+      ? 'Enter your administrator email.'
+      : !/^\S+@\S+\.\S+$/.test(normalizedEmail)
+        ? 'Enter a valid email address.'
+        : '';
+    const nextPasswordError = password ? '' : 'Enter your password.';
+
+    setEmailError(nextEmailError);
+    setPasswordError(nextPasswordError);
+    setLoginError('');
+    if (nextEmailError || nextPasswordError) return;
+
+    setIsSubmitting(true);
+    try {
+      if (!await signInAdmin(normalizedEmail, password)) {
+        setLoginError('Incorrect administrator email or password.');
+        return;
+      }
+      navigate('/admin', { replace: true });
+    } catch {
+      setLoginError('Administrator sign in is temporarily unavailable. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#f5f6f1] text-[var(--color-text-primary)]">
       <div className="mx-auto flex min-h-screen w-full max-w-[1280px] flex-col px-5 py-6 sm:px-8 lg:px-12">
         <header className="flex items-center">
           <Link to="/" aria-label="SEIMEI home" className="flex items-center gap-2.5">
-            <span className="relative h-12 w-[72px] shrink-0 overflow-hidden" aria-hidden="true">
-              <img src={`${import.meta.env.BASE_URL}logo.jpeg`} alt="" className="absolute -left-[42px] -top-[38px] h-[160px] w-[160px] max-w-none" />
+            <span className="relative h-10 w-[52px] shrink-0 overflow-hidden" aria-hidden="true">
+              <img src={`${import.meta.env.BASE_URL}logo.jpeg`} alt="" className="absolute -left-[19px] -top-[5px] h-[90px] w-[90px] max-w-none" />
             </span>
             <span className="-ml-2 leading-none">
               <span className="text-[21px] font-semibold text-[var(--color-brand-950)]">SEIMEI</span>
@@ -95,14 +127,14 @@ export function LoginPage() {
           <section className="mx-auto w-full max-w-[520px] rounded-lg border border-[#e3e7df] bg-white p-6 shadow-[0_12px_36px_rgba(34,54,37,0.07)] sm:p-9">
             {mode === 'signin' ? <>
             <div className="mb-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-700)]">Employee portal</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">Welcome back</h2>
-              <p className="mt-1.5 text-sm text-[var(--color-text-secondary)]">Continue your wellbeing journey with SEIMEI.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-700)]">{adminMode ? 'Organization portal' : 'Employee portal'}</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">{adminMode ? 'Administrator sign in' : 'Welcome back'}</h2>
+              <p className="mt-1.5 text-sm text-[var(--color-text-secondary)]">{adminMode ? 'Access organization-level wellbeing summaries.' : 'Continue your wellbeing journey with SEIMEI.'}</p>
             </div>
 
-            <form onSubmit={handleSubmit} noValidate>
+            <form onSubmit={adminMode ? handleAdminSubmit : handleSubmit} noValidate>
               <div className="mb-5">
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#343b34]">Work email</label>
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#343b34]">{adminMode ? 'Administrator email' : 'Work email'}</label>
                 <input
                   id="email"
                   name="email"
@@ -113,7 +145,7 @@ export function LoginPage() {
                   aria-invalid={Boolean(emailError)}
                   aria-describedby={emailError ? 'email-error' : undefined}
                   className={`h-11 w-full rounded border bg-white px-3.5 text-sm outline-none transition focus:border-[var(--color-brand-600)] focus:ring-2 focus:ring-[var(--color-brand-100)] ${emailError ? 'border-[#bd4d43]' : 'border-[#d9dfd6]'}`}
-                  placeholder="you@company.com"
+                  placeholder={adminMode ? 'admin@company.com' : 'you@company.com'}
                 />
                 {emailError && <p id="email-error" className="mt-1.5 text-xs text-[#a53e35]">{emailError}</p>}
               </div>
@@ -150,16 +182,32 @@ export function LoginPage() {
 
               {loginError && <p role="alert" className="mt-5 rounded border border-[#efd1cc] bg-[#fff7f5] px-3.5 py-3 text-sm leading-5 text-[#9b3d34]">{loginError}</p>}
 
-              <button type="submit" disabled={isSubmitting || !authReady} className="mt-7 flex h-11 w-full items-center justify-center gap-2 rounded bg-[var(--color-brand-800)] px-4 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand-950)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-400)] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70">
-                {isSubmitting ? 'Signing In…' : authReady ? 'Sign In' : 'Loading account…'}
+              <button type="submit" disabled={isSubmitting || (!adminMode && !authReady)} className="mt-7 flex h-11 w-full items-center justify-center gap-2 rounded bg-[var(--color-brand-800)] px-4 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand-950)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-400)] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70">
+                {isSubmitting ? 'Signing In…' : adminMode || authReady ? 'Sign In' : 'Loading account…'}
               </button>
             </form>
 
-            <div className="mt-6 flex items-start gap-2.5 border-t border-[#edf0eb] pt-5 text-xs leading-5 text-[#687168]">
-              <LockKeyhole size={15} className="mt-0.5 shrink-0 text-[var(--color-brand-700)]" />
-              <p>Prototype accounts are stored in this browser. Choose a password you do not use elsewhere.</p>
-            </div>
-            <p className="mt-5 text-center text-sm text-[var(--color-text-secondary)]">Don't have an account? <button type="button" onClick={() => navigate('/create-account')} className="font-semibold text-[var(--color-brand-700)] hover:text-[var(--color-brand-950)] focus:outline-none focus:underline">Create an account</button></p>
+            {adminMode ? <>
+              <div className="mt-6 rounded border border-[#e3e7df] bg-[#f8faf6] px-3.5 py-3 text-xs leading-5 text-[#596259]">
+                <p className="font-semibold text-[var(--color-brand-900)]">Local prototype demo credentials</p>
+                <p className="mt-1">Email: {ADMIN_DEMO_CREDENTIALS.email}</p>
+                <p>Password: {ADMIN_DEMO_CREDENTIALS.password}</p>
+              </div>
+              <div className="mt-4 flex items-start gap-2.5 text-xs leading-5 text-[#687168]">
+                <LockKeyhole size={15} className="mt-0.5 shrink-0 text-[var(--color-brand-700)]" />
+                <p>Prototype-only access. Browser-side role checks are not production authorization.</p>
+              </div>
+              <p className="mt-5 text-center text-sm text-[var(--color-text-secondary)]"><button type="button" onClick={() => { setAdminMode(false); setEmail(''); setPassword(''); setLoginError(''); }} className="font-semibold text-[var(--color-brand-700)] hover:text-[var(--color-brand-950)] focus:outline-none focus:underline">Back to employee sign in</button></p>
+            </> : <>
+              <div className="mt-6 flex items-start gap-2.5 border-t border-[#edf0eb] pt-5 text-xs leading-5 text-[#687168]">
+                <LockKeyhole size={15} className="mt-0.5 shrink-0 text-[var(--color-brand-700)]" />
+                <p>Prototype accounts are stored in this browser. Choose a password you do not use elsewhere.</p>
+              </div>
+              <p className="mt-5 text-center text-sm text-[var(--color-text-secondary)]">Don't have an account? <button type="button" onClick={() => navigate('/create-account')} className="font-semibold text-[var(--color-brand-700)] hover:text-[var(--color-brand-950)] focus:outline-none focus:underline">Create an account</button></p>
+              <div className="mt-5 border-t border-[#edf0eb] pt-4 text-center">
+                <button type="button" onClick={() => { setAdminMode(true); setEmail(''); setPassword(''); setLoginError(''); setEmailError(''); setPasswordError(''); }} className="text-sm font-medium text-[var(--color-brand-700)] hover:text-[var(--color-brand-950)] focus:outline-none focus:underline">Administrator sign in</button>
+              </div>
+            </>}
             </> : <RegistrationForm onSuccess={() => navigate('/dashboard', { replace: true })} onSignIn={() => navigate('/sign-in')} />}
           </section>
         </div>

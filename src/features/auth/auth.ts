@@ -6,11 +6,17 @@ const LEGACY_SESSION_KEY = 'seimei_auth';
 const HASH_ITERATIONS = 120_000;
 const DEMO_EMAIL = 'sarah.johnson@example.com';
 const DEMO_PASSWORD = 'seimei123';
+export const ADMIN_DEMO_CREDENTIALS = {
+  email: 'keerti.admin@example.com',
+  password: 'seimei-admin-demo',
+} as const;
+const ADMIN_USER_ID = 'demo-seimei-admin';
 
 export type EmployeeAccount = {
   id: string;
   fullName: string;
   email: string;
+  accountType: 'employee';
   role: string;
   department?: string;
   createdAt: string;
@@ -18,7 +24,14 @@ export type EmployeeAccount = {
   passwordHash: string;
 };
 
-export type AuthenticatedUser = Omit<EmployeeAccount, 'passwordSalt' | 'passwordHash'>;
+export type AuthenticatedUser = Omit<EmployeeAccount, 'passwordSalt' | 'passwordHash'> | {
+  id: typeof ADMIN_USER_ID;
+  fullName: 'Keerti Admin';
+  email: typeof ADMIN_DEMO_CREDENTIALS.email;
+  accountType: 'admin';
+  role: 'Administrator';
+  createdAt: string;
+};
 
 export type RegistrationInput = {
   fullName: string;
@@ -91,13 +104,13 @@ async function migrateEmployee(value: unknown): Promise<EmployeeAccount | null> 
   const createdAt = typeof employee.createdAt === 'string' ? employee.createdAt : new Date().toISOString();
 
   if (typeof employee.passwordSalt === 'string' && typeof employee.passwordHash === 'string') {
-    return { id, fullName, email, role, department, createdAt, passwordSalt: employee.passwordSalt, passwordHash: employee.passwordHash };
+    return { id, fullName, email, accountType: 'employee', role, department, createdAt, passwordSalt: employee.passwordSalt, passwordHash: employee.passwordHash };
   }
 
   if (typeof employee.password !== 'string') return null;
   const passwordSalt = createSalt();
   const passwordHash = await hashPassword(employee.password, passwordSalt);
-  return { id, fullName, email, role, department, createdAt, passwordSalt, passwordHash };
+  return { id, fullName, email, accountType: 'employee', role, department, createdAt, passwordSalt, passwordHash };
 }
 
 async function loadEmployees(): Promise<EmployeeAccount[]> {
@@ -116,6 +129,7 @@ async function loadEmployees(): Promise<EmployeeAccount[]> {
       id: 'demo-sarah-johnson',
       fullName: 'Sarah Johnson',
       email: DEMO_EMAIL,
+      accountType: 'employee',
       role: 'Marketing Manager',
       department: 'Marketing',
       createdAt: '2026-01-01T00:00:00.000Z',
@@ -154,7 +168,15 @@ function saveCurrentUser(user: AuthenticatedUser): void {
 }
 
 function isAuthenticatedUser(value: unknown): value is AuthenticatedUser {
-  return typeof value === 'object' && value !== null &&
+  if (typeof value !== 'object' || value === null || !('accountType' in value)) return false;
+  if (value.accountType === 'admin') {
+    return 'id' in value && value.id === ADMIN_USER_ID &&
+      'email' in value && value.email === ADMIN_DEMO_CREDENTIALS.email &&
+      'fullName' in value && value.fullName === 'Keerti Admin' &&
+      'role' in value && value.role === 'Administrator' &&
+      'createdAt' in value && typeof value.createdAt === 'string';
+  }
+  return value.accountType === 'employee' &&
     'id' in value && typeof value.id === 'string' &&
     'fullName' in value && typeof value.fullName === 'string' &&
     'email' in value && typeof value.email === 'string' &&
@@ -186,6 +208,7 @@ export function getCurrentUser(): AuthenticatedUser | null {
       id: 'id' in legacy && typeof legacy.id === 'string' ? legacy.id : `legacy-${normalizeEmail(legacy.email)}`,
       fullName: name,
       email: normalizeEmail(legacy.email),
+      accountType: 'employee',
       role: 'role' in legacy && typeof legacy.role === 'string' ? legacy.role : 'Employee',
       ...('department' in legacy && typeof legacy.department === 'string' ? { department: legacy.department } : {}),
       createdAt: 'createdAt' in legacy && typeof legacy.createdAt === 'string' ? legacy.createdAt : new Date().toISOString(),
@@ -215,6 +238,27 @@ export async function signIn(email: string, password: string): Promise<Authentic
   return user;
 }
 
+export async function signInAdmin(email: string, password: string): Promise<AuthenticatedUser | null> {
+  if (normalizeEmail(email) !== ADMIN_DEMO_CREDENTIALS.email || password !== ADMIN_DEMO_CREDENTIALS.password) return null;
+
+  const user: AuthenticatedUser = {
+    id: ADMIN_USER_ID,
+    fullName: 'Keerti Admin',
+    email: ADMIN_DEMO_CREDENTIALS.email,
+    accountType: 'admin',
+    role: 'Administrator',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+  saveCurrentUser(user);
+  return user;
+}
+
+export function isAdminUser(user: AuthenticatedUser | null): user is Extract<AuthenticatedUser, { accountType: 'admin' }> {
+  return user?.accountType === 'admin' &&
+    user.email === ADMIN_DEMO_CREDENTIALS.email &&
+    user.id === ADMIN_USER_ID;
+}
+
 export const login = signIn;
 export const authenticate = signIn;
 
@@ -228,6 +272,7 @@ export async function signUp(input: RegistrationInput): Promise<{ user: Authenti
     id: createId(),
     fullName: input.fullName.trim(),
     email,
+    accountType: 'employee',
     role: input.role?.trim() || 'Employee',
     ...(input.department?.trim() ? { department: input.department.trim() } : {}),
     createdAt: new Date().toISOString(),

@@ -16,6 +16,9 @@ import { SmartAlertsPage } from './features/alerts/SmartAlertsPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
+import { AdminRoute } from './features/auth/AdminRoute';
+import { AdminLayout } from './features/admin/AdminLayout';
+import { AdminDashboardPage } from './features/admin/AdminDashboardPage';
 
 export default function App() {
   return (
@@ -55,6 +58,16 @@ export default function App() {
             <p className="text-[var(--color-text-secondary)]">The requested page could not be found.</p>
           </div>
         } />
+        </Route>
+      </Route>
+      <Route element={<AdminRoute />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboardPage section="overview" />} />
+          <Route path="workforce" element={<AdminDashboardPage section="workforce" />} />
+          <Route path="assessments" element={<AdminDashboardPage section="assessments" />} />
+          <Route path="outcomes" element={<AdminDashboardPage section="outcomes" />} />
+          <Route path="programs" element={<AdminDashboardPage section="programs" />} />
+          <Route path="employees" element={<AdminDashboardPage section="employees" />} />
         </Route>
       </Route>
     </Routes>
