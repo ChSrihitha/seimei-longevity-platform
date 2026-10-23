@@ -3,6 +3,6 @@ import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: '/seimei-longevity-platform/',
+  base: '/',
   plugins: [react(), tailwindcss()],
 })
