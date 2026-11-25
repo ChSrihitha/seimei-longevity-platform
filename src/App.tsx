@@ -67,6 +67,7 @@ export default function App() {
           <Route path="assessments" element={<AdminDashboardPage section="assessments" />} />
           <Route path="outcomes" element={<AdminDashboardPage section="outcomes" />} />
           <Route path="programs" element={<AdminDashboardPage section="programs" />} />
+          <Route path="roi" element={<AdminDashboardPage section="roi" />} />
           <Route path="employees" element={<AdminDashboardPage section="employees" />} />
         </Route>
       </Route>

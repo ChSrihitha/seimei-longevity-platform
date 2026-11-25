@@ -6,6 +6,7 @@ import { usePrototypeStore } from '../../store/usePrototypeStore';
 import type { WellbeingCheckIn } from '../../types';
 import { cn } from '../../lib/utils';
 import { getCurrentUser } from '../auth/auth';
+import { SEIMEI_PROGRAMS } from '../../data/programCatalog';
 
 const moods = [
   { value: 'struggling' as const, label: 'Low Energy', icon: Battery, tone: 'bg-[#f0ebfb] text-[#7653ad]' },
@@ -23,6 +24,7 @@ const assessments = [
 ] as const;
 
 const quickActions = [['5-Minute Reset', 'Quick relaxation', Leaf, '/programs/reset'], ['Breathing Exercise', 'Calm your mind', Activity, '/resources/breathing'], ['Sleep Guide', 'Better sleep', Moon, '/resources/sleep'], ['Talk to Coach', 'Book a session', MessageCircle, '/programs/coaching']] as const;
+const exploreProgramIds = new Set(['menopause-clinic-days', 'longevity-assessments', 'physio-drop-in', 'manager-training']);
 
 function Score({ value }: { value: number }) {
   const circumference = 2 * Math.PI * 43;
@@ -36,6 +38,7 @@ export function DashboardPage() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const chooseMood = (mood: WellbeingCheckIn['mood']) => { setSelectedMood(mood); setCurrentCheckIn({ id: 'dashboard-checkin', date: new Date().toISOString(), mood }); };
   const firstName = (getCurrentUser()?.fullName ?? profile.name).split(' ')[0];
+  const explorePrograms = SEIMEI_PROGRAMS.filter(program => exploreProgramIds.has(program.id));
 
   return <div className="seimei-dashboard-hero mx-auto max-w-6xl space-y-5 rounded-2xl p-1 pb-10 animate-in fade-in duration-500">
     <header className="flex items-start justify-between gap-4">
@@ -56,5 +59,30 @@ export function DashboardPage() {
       </div>
       <aside className="space-y-5"><section className="relative min-h-[330px] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[#f2f7ee] p-5 shadow-[0_4px_20px_rgba(42,64,38,0.04)]"><div className="relative"><div className="mb-4 flex items-center gap-2 text-sm font-semibold"><Sparkles size={16} className="text-[var(--color-accent)]" />AI Wellness Companion</div><div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-[#dcead4] text-3xl shadow-sm">◉</div><div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-sm shadow-sm"><p className="font-medium">Hi {firstName},</p><p className="mt-3 leading-relaxed text-[var(--color-text-secondary)]">I noticed your stress score has increased this week. Would you like a 5-minute guided breathing session?</p><Button className="mt-4 w-full" size="sm" onClick={() => navigate('/ai-companion')}>Start Session <ArrowRight size={14} className="ml-2" /></Button><button onClick={() => navigate('/ai-companion')} className="mt-3 block w-full text-center text-[11px] text-[var(--color-text-secondary)]">Not now, maybe later</button></div><div className="mt-4 flex justify-center gap-1.5"><span className="h-1.5 w-5 rounded-full bg-[var(--color-accent)]" /><span className="h-1.5 w-1.5 rounded-full bg-[#d8ded4]" /><span className="h-1.5 w-1.5 rounded-full bg-[#d8ded4]" /></div></div></section><section className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-[0_4px_20px_rgba(42,64,38,0.04)]"><h2 className="mb-4 text-base font-semibold">Upcoming Programs & Sessions</h2><div className="space-y-3">{['15-Minute Reset Session', 'Weekly Unwind Program', 'Wellness Coaching'].map((title, index) => <div key={title} className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-50)] text-[var(--color-brand-600)]"><Activity size={16} /></span><div className="min-w-0 flex-1"><strong className="block truncate text-xs">{title}</strong><span className="text-[10px] text-[var(--color-text-secondary)]">{index === 0 ? 'Today, 4:00 PM' : 'This week'}</span></div><button onClick={() => navigate('/programs')} className="text-[10px] font-semibold text-[var(--color-accent)]">Join</button></div>)}</div></section><div className="rounded-2xl border border-[var(--color-brand-100)] bg-[var(--color-brand-50)] p-5"><p className="text-2xl leading-none text-[var(--color-brand-500)]">“</p><p className="mt-2 text-sm font-medium leading-relaxed text-[var(--color-brand-900)]">Wellbeing is not a destination,<br />it’s a daily practice.</p></div></aside>
     </div>
+    <section className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-[0_4px_20px_rgba(42,64,38,0.04)]">
+      <div className="mb-4">
+        <h2 className="text-base font-semibold">Explore More Wellness Programmes</h2>
+        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">Explore programmes for different aspects of health and wellbeing.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {explorePrograms.map((program) => {
+          const Icon = program.icon;
+          return (
+            <article key={program.id} className="flex min-w-0 flex-col rounded-xl border border-[var(--color-border)] p-4 transition-shadow hover:shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full', program.tone)}><Icon size={19} /></span>
+                <span className="rounded-full bg-[var(--color-surface-primary)] px-2.5 py-1 text-[10px] font-semibold text-[var(--color-text-secondary)]">{program.duration}</span>
+              </div>
+              <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-secondary)]">{program.category}</p>
+              <h3 className="mt-1 text-sm font-semibold leading-snug">{program.title}</h3>
+              <p className="mt-2 flex-1 text-xs leading-relaxed text-[var(--color-text-secondary)]">{program.description}</p>
+              <button type="button" onClick={() => navigate('/programs')} className="group mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-accent)]">
+                View Programme <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   </div>;
 }

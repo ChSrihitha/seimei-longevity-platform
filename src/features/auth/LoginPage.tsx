@@ -3,6 +3,7 @@ import { Eye, EyeOff, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ADMIN_DEMO_CREDENTIALS, authenticate, getAuthenticatedUser, initializeAuth, signInAdmin } from './auth';
 import { RegistrationForm } from './RegistrationForm';
+import logo from '../../assets/LOGO_img.jpeg';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -99,14 +100,14 @@ export function LoginPage() {
     <main className="min-h-screen bg-[#f5f6f1] text-[var(--color-text-primary)]">
       <div className="mx-auto flex min-h-screen w-full max-w-[1280px] flex-col px-5 py-6 sm:px-8 lg:px-12">
         <header className="flex items-center">
-          <Link to="/" aria-label="SEIMEI home" className="flex items-center gap-2.5">
-            <span className="relative h-10 w-[52px] shrink-0 overflow-hidden" aria-hidden="true">
-              <img src={`${import.meta.env.BASE_URL}logo.jpeg`} alt="" className="absolute -left-[19px] -top-[5px] h-[90px] w-[90px] max-w-none" />
+          <Link to="/" aria-label="SEIMEI home" className="flex items-center gap-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)]">
+            <span className="relative h-[52px] w-20 shrink-0 overflow-hidden" aria-hidden="true">
+              <img src={logo} alt="" className="absolute left-[-47px] top-[-43px] h-[184px] w-[184px] max-w-none" />
             </span>
-            <span className="-ml-2 leading-none">
-              <span className="text-[21px] font-semibold text-[var(--color-brand-950)]">SEIMEI</span>
-              <span className="mt-1 block text-[9px] text-[var(--color-brand-700)]">Corporate Longevity Hive</span>
-            </span>
+            <div className="leading-none">
+              <span className="text-[23px] font-semibold tracking-[-0.04em] text-[var(--color-brand-950)]">SEIMEI</span>
+              <span className="block text-[9px] text-[var(--color-brand-700)] mt-1 tracking-tight">Corporate Longevity Hive</span>
+            </div>
           </Link>
         </header>
 

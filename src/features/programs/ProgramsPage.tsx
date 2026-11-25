@@ -1,16 +1,11 @@
 import { useState } from 'react';
-import { Activity, ArrowRight, CheckCircle2, Flame, Leaf, Moon, Users, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { usePrototypeStore } from '../../store/usePrototypeStore';
+import { SEIMEI_PROGRAMS } from '../../data/programCatalog';
 
-const programs = [
-  { id: 'reset', title: '15-Minute Reset', category: 'Stress & Recovery', duration: '15 min', description: 'A short guided session to reset your nervous system and return to your day with more space.', icon: Leaf, tone: 'bg-[#eef6e9] text-[var(--color-brand-600)]', benefits: ['Lower immediate tension', 'Restore focus', 'Build a daily reset habit'] },
-  { id: 'unwind', title: 'Weekly Unwind Program', category: 'Mindfulness', duration: '30 min weekly', description: 'A gentle group recovery ritual with breathing, reflection, and practical tools for the week ahead.', icon: Users, tone: 'bg-[#eaf2fb] text-[#3d73bd]', benefits: ['Guided group practice', 'Reflect and share', 'Recover consistently'] },
-  { id: 'sleep', title: 'Sleep Recovery Program', category: 'Sleep', duration: '4 weeks', description: 'Build a calmer evening routine and improve the quality of your recovery overnight.', icon: Moon, tone: 'bg-[#f0ebfb] text-[#7653ad]', benefits: ['Create an evening ritual', 'Improve sleep consistency', 'Wake with more energy'] },
-  { id: 'burnout', title: 'Burnout Prevention Workshop', category: 'Stress & Recovery', duration: '60 min', description: 'Learn to spot early signals, protect your capacity, and create sustainable working rhythms.', icon: Flame, tone: 'bg-[#fff0e7] text-[#d87935]', benefits: ['Recognize early signals', 'Set useful boundaries', 'Plan sustainable recovery'] },
-  { id: 'coaching', title: 'Wellness Coaching', category: 'Coaching', duration: '45 min', description: 'A one-to-one conversation with a coach tailored to your wellbeing goals and current season.', icon: Activity, tone: 'bg-[#fff4df] text-[#c28a25]', benefits: ['Clarify your goals', 'Make a practical plan', 'Stay accountable'] },
-] as const;
+const programs = SEIMEI_PROGRAMS;
 
 type Program = typeof programs[number];
 
@@ -23,7 +18,7 @@ export function ProgramsPage() {
   const [time, setTime] = useState('10:00 AM');
   const { programActivity, updateProgramActivity } = usePrototypeStore();
   const visible = category === 'Recommended' ? programs : programs.filter(program => program.category === category);
-  const filters = ['Recommended', 'Stress & Recovery', 'Sleep', 'Mindfulness', 'Coaching'];
+  const filters = ['Recommended', ...new Set(programs.map(program => program.category))];
   const close = () => { setSelected(null); if (programId) navigate('/programs'); };
   const action = (program: Program) => program.id === 'coaching' ? (programActivity.bookings[program.id] ? `Booked for ${programActivity.bookings[program.id].date} at ${programActivity.bookings[program.id].time}` : 'Book Session') : program.id === 'burnout' ? (programActivity.registered.includes(program.id) ? 'Registered' : 'Register') : program.id === 'reset' ? (programActivity.started.includes(program.id) ? 'Continue Session' : 'Start Session') : (programActivity.joined.includes(program.id) ? 'Continue Program' : 'Join Program');
   const confirm = () => { if (!selected) return; if (selected.id === 'coaching') updateProgramActivity({ bookings: { ...programActivity.bookings, coaching: { date, time } } }); else if (selected.id === 'burnout') updateProgramActivity({ registered: [...new Set([...programActivity.registered, selected.id])] }); else if (selected.id === 'reset') updateProgramActivity({ started: [...new Set([...programActivity.started, selected.id])] }); else updateProgramActivity({ joined: [...new Set([...programActivity.joined, selected.id])] }); };
